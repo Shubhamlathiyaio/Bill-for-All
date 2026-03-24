@@ -1,0 +1,48 @@
+Analyzing bill_for_all...                                       
+
+   info - Statements in an if should be enclosed in a block - lib\app\controllers\todo_controller.dart:87:35 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\app\controllers\todo_controller.dart:88:44 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\app\controllers\todo_controller.dart:89:10 - curly_braces_in_flow_control_structures
+  error - Target of URI doesn't exist: '../../../utils/constants/app_strings.dart' - lib\app\ui\pages\auth\auth_page.dart:8:8 - uri_does_not_exist
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\auth\auth_page.dart:83:24 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\auth\auth_page.dart:85:24 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\auth\auth_page.dart:151:18 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\auth\auth_page.dart:152:17 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\auth\auth_page.dart:159:22 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\auth\auth_page.dart:160:21 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\auth\auth_page.dart:180:15 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\auth\auth_page.dart:196:22 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\auth\auth_page.dart:219:18 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\auth\auth_page.dart:220:17 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\auth\auth_page.dart:226:18 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\auth\auth_page.dart:227:17 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\auth\auth_page.dart:234:22 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\auth\auth_page.dart:235:21 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\auth\auth_page.dart:259:22 - undefined_identifier
+  error - Target of URI doesn't exist: '../../../utils/constants/app_strings.dart' - lib\app\ui\pages\language\language_selection_page.dart:5:8 - uri_does_not_exist
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\language\language_selection_page.dart:91:24 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\language\language_selection_page.dart:93:24 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\language\language_selection_page.dart:114:45 - undefined_identifier
+  error - Target of URI doesn't exist: '../../../utils/constants/app_strings.dart' - lib\app\ui\pages\module_selection\module_selection_page.dart:8:8 - uri_does_not_exist
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\module_selection\module_selection_page.dart:96:34 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\module_selection\module_selection_page.dart:98:34 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\module_selection\module_selection_page.dart:105:35 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\module_selection\module_selection_page.dart:170:34 - undefined_identifier
+  error - Target of URI doesn't exist: '../../../utils/constants/app_strings.dart' - lib\app\ui\pages\splash\splash_page.dart:7:8 - uri_does_not_exist
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\splash\splash_page.dart:112:24 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\splash\splash_page.dart:115:21 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\waiting\waiting_page.dart:109:22 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\waiting\waiting_page.dart:112:19 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\waiting\waiting_page.dart:138:35 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\waiting\waiting_page.dart:192:19 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\waiting\waiting_page.dart:203:57 - undefined_identifier
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\waiting\waiting_page.dart:203:79 - undefined_identifier
+  error - Invalid constant value - lib\app\ui\pages\waiting\waiting_page.dart:222:50 - invalid_constant
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\waiting\waiting_page.dart:222:50 - undefined_identifier
+  error - Invalid constant value - lib\app\ui\pages\waiting\waiting_page.dart:223:50 - invalid_constant
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\waiting\waiting_page.dart:223:50 - undefined_identifier
+  error - Invalid constant value - lib\app\ui\pages\waiting\waiting_page.dart:224:60 - invalid_constant
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\waiting\waiting_page.dart:224:60 - undefined_identifier
+  error - Invalid constant value - lib\app\ui\pages\waiting\waiting_page.dart:225:60 - invalid_constant
+  error - Undefined name 'AppStrings' - lib\app\ui\pages\waiting\waiting_page.dart:225:60 - undefined_identifier
+

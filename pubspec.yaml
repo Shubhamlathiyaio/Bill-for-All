@@ -1,21 +1,60 @@
-name: flutter_todo
-description: LAN Todo App - talks to your PC over Wi-Fi
+name: bill_for_all
+description: Bill For All — Multi-module business workspace app
 publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=3.10.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  http: ^1.1.0
-  shared_preferences: ^2.2.2
+
+  # GetX ecosystem
+  get: ^4.6.6
+  get_it: ^7.7.0
+  injectable: ^2.4.4
+
+  # Networking
+  dio: ^5.7.0
+  retrofit: ^4.9.2
+
+  # Storage
+  get_storage: ^2.1.1
+  shared_preferences: ^2.2.0
+
+  # UI helpers
+  flutter_easyloading: ^3.0.5
+
+  # Auth / DB
+  supabase_flutter: ^2.8.4
+
+  # Utils
+  freezed_annotation: ^3.1.0
+  json_annotation: ^4.9.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^3.0.0
 
+  # Code generation
+  build_runner: ^2.4.13
+  injectable_generator: ^2.6.2
+  freezed: ^3.2.5
+  json_serializable: ^6.8.0
+  retrofit_generator: ^10.2.3
+
 flutter:
   uses-material-design: true
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
