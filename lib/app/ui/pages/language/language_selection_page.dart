@@ -140,7 +140,7 @@ class _LanguageTile extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         color: isSelected ? colors.primary.changeOpacity(0.14) : colors.bg1,
-        border: Border.all(color: isSelected ? colors.primary : colors.white.changeOpacity(0.06), width: isSelected ? 1.5 : 1),
+        border: Border.all(color: isSelected ? colors.primary : colors.textPrimary.changeOpacity(0.06), width: isSelected ? 1.5 : 1),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),

@@ -3,7 +3,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/constants/supabase_constants.dart';
+import '../utils/constants/supabase_constants.dart';
 import '../routes/app_routes.dart';
 
 @lazySingleton

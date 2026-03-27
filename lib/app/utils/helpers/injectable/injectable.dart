@@ -1,4 +1,4 @@
-import 'package:bill_for_all/core/constants/supabase_constants.dart';
+import 'package:bill_for_all/app/utils/constants/supabase_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get_it/get_it.dart';

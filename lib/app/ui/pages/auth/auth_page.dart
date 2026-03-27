@@ -104,7 +104,7 @@ class _AuthBodyState extends State<_AuthBody>
                   dividerColor: Colors.transparent,
                   labelColor: colors.white,
                   unselectedLabelColor:
-                      colors.white.changeOpacity(0.38),
+                      colors.textPrimary.changeOpacity(0.38),
                   labelStyle: styles.s14w700White,
                   tabs: const [
                     Tab(text: 'Log In'),
@@ -165,7 +165,7 @@ class _LoginForm extends StatelessWidget {
                   ctrl.loginObscure.value
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
-                  color: colors.white.changeOpacity(0.38),
+                  color: colors.textPrimary.changeOpacity(0.38),
                   size: 20,
                 ),
                 onPressed: ctrl.toggleLoginObscure,
@@ -240,7 +240,7 @@ class _SignUpForm extends StatelessWidget {
                   ctrl.signUpObscure.value
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
-                  color: colors.white.changeOpacity(0.38),
+                  color: colors.textPrimary.changeOpacity(0.38),
                   size: 20,
                 ),
                 onPressed: ctrl.toggleSignUpObscure,
@@ -301,8 +301,8 @@ class _AuthField extends StatelessWidget {
         hintText: hint,
         labelStyle: styles.s13w400Muted,
         hintStyle:
-            styles.s14w400Muted.copyWith(color: colors.white.changeOpacity(0.22)),
-        prefixIcon: Icon(icon, color: colors.white.changeOpacity(0.38), size: 20),
+            styles.s14w400Muted.copyWith(color: colors.textPrimary.changeOpacity(0.22)),
+        prefixIcon: Icon(icon, color: colors.textPrimary.changeOpacity(0.38), size: 20),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: colors.fieldColor,
@@ -311,12 +311,12 @@ class _AuthField extends StatelessWidget {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide:
-              BorderSide(color: colors.white.changeOpacity(0.08)),
+              BorderSide(color: colors.textPrimary.changeOpacity(0.08)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide:
-              BorderSide(color: colors.white.changeOpacity(0.08)),
+              BorderSide(color: colors.textPrimary.changeOpacity(0.08)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

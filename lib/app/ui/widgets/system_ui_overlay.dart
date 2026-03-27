@@ -44,9 +44,9 @@ class OnboardingSystemUiOverlayStyle extends StatelessWidget {
 
   static const SystemUiOverlayStyle style = SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
+    statusBarIconBrightness: Brightness.dark,
     systemNavigationBarColor: KColors.onboarding,
-    systemNavigationBarIconBrightness: Brightness.light,
+    systemNavigationBarIconBrightness: Brightness.dark,
   );
 
   @override

@@ -6,17 +6,14 @@ import '../routes/app_routes.dart';
 
 @lazySingleton
 class AuthController extends GetxController {
-  // TextEditingControllers — disposed in onClose()
   final emailCtrl = TextEditingController();
   final passCtrl = TextEditingController();
   final nameCtrl = TextEditingController();
 
-  // Login tab
   final loginIsLoading = false.obs;
   final loginError = Rxn<String>();
   final loginObscure = true.obs;
 
-  // Sign up tab
   final signUpIsLoading = false.obs;
   final signUpError = Rxn<String>();
   final signUpObscure = true.obs;
@@ -43,19 +40,9 @@ class AuthController extends GetxController {
       );
 
       if (response.session != null) {
-        final userId = response.session!.user.id;
-        final data = await Supabase.instance.client
-            .from('user_workspaces')
-            .select('supabase_url')
-            .eq('user_id', userId)
-            .maybeSingle();
-
-        final supabaseUrl = data?['supabase_url'];
-        if (supabaseUrl != null && (supabaseUrl as String).isNotEmpty) {
-          Get.offAllNamed(AppRoutes.home);
-        } else {
-          Get.offAllNamed(AppRoutes.waiting);
-        }
+        // Always go to shell — shell decides whether to show module selection
+        // or the dashboard based on whether modules have been saved locally.
+        Get.offAllNamed(AppRoutes.home);
       }
     } on AuthException catch (e) {
       loginError.value = e.message;
@@ -78,6 +65,7 @@ class AuthController extends GetxController {
       );
 
       if (response.user != null) {
+        // New user — go pick modules first
         Get.offAllNamed(AppRoutes.moduleSelection);
       } else {
         signUpError.value = 'Sign up failed. Please try again.';

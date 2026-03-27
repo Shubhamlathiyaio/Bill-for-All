@@ -16,6 +16,15 @@ extension ColorX on Color {
   Color changeOpacity(double opacity) => withValues(alpha: opacity);
 }
 
+extension HexColor on Color {
+  static Color fromHex(String hexString) {
+    final buffer = StringBuffer();
+    if (hexString.length == 6 || hexString.length == 7) buffer.write('ff');
+    buffer.write(hexString.replaceFirst('#', ''));
+    return Color(int.parse(buffer.toString(), radix: 16));
+  }
+}
+
 extension StringX on String {
   bool get isValidEmail => RegExp(r'^[^@]+@[^@]+\.[^@]+$').hasMatch(this);
   bool get isValidPhone => RegExp(r'^\+?[0-9]{7,15}$').hasMatch(this);

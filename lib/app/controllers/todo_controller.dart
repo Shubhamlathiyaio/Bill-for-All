@@ -5,6 +5,8 @@ import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/models/todo_model.dart';
 import '../data/models/todo_category_model.dart';
+import '../data/services/tenant_service.dart';
+import '../utils/helpers/injectable/injectable.dart';
 
 @lazySingleton
 class TodoController extends GetxController {
@@ -12,14 +14,19 @@ class TodoController extends GetxController {
 
   final GetStorage _storage;
   static const _kTodos = 'cached_todos';
-  
-  // State
+
   final todos = <TodoModel>[].obs;
   final categories = <TodoCategoryModel>[].obs;
-  
   final isLoading = false.obs;
-  final currentFilter = 'All'.obs; // All, pending, in-progress, completed
-  
+  final currentFilter = 'All'.obs;
+
+  /// Returns the tenant Supabase client (module-specific project).
+  /// Falls back to the main client if tenant is not yet initialised.
+  SupabaseClient get _db {
+    final tenant = getIt<TenantService>().client;
+    return tenant ?? Supabase.instance.client;
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -43,31 +50,31 @@ class TodoController extends GetxController {
   Future<void> fetchTodos() async {
     try {
       isLoading.value = true;
+      // Use main auth to get the current user id, but query on tenant db.
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) return;
-      
-      final response = await Supabase.instance.client
-          .from('todos')
-          .select()
-          .eq('user_id', user.id);
-          
-      final List<TodoModel> fetched = (response as List).map((e) => TodoModel.fromJson(e)).toList();
-      todos.value = fetched;
+
+      final response =
+          await _db.from('todos').select().eq('user_id', user.id);
+
+      todos.value =
+          (response as List).map((e) => TodoModel.fromJson(e)).toList();
       await _saveToCache();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to fetch todos');
+      Get.snackbar('Error', 'Failed to fetch todos',
+          snackPosition: SnackPosition.BOTTOM);
     } finally {
       isLoading.value = false;
     }
   }
 
-  // Filter and Sort getters
   List<TodoModel> get filteredTodos {
     var list = todos.toList();
     if (currentFilter.value != 'All') {
-      list = list.where((t) => t.status == currentFilter.value.toLowerCase()).toList();
+      list = list
+          .where((t) => t.status == currentFilter.value.toLowerCase())
+          .toList();
     }
-    // Sort by dueDate
     list.sort((a, b) {
       if (a.dueDate == null && b.dueDate == null) return 0;
       if (a.dueDate == null) return 1;
@@ -77,20 +84,19 @@ class TodoController extends GetxController {
     return list;
   }
 
-  void setFilter(String filter) {
-    currentFilter.value = filter;
-  }
+  void setFilter(String filter) => currentFilter.value = filter;
 
   Future<void> toggleStatus(TodoModel todo) async {
-    // pending -> in-progress -> completed -> pending
     String nextStatus;
-    if (todo.status == 'pending') nextStatus = 'in-progress';
-    else if (todo.status == 'in-progress') nextStatus = 'completed';
-    else nextStatus = 'pending';
+    if (todo.status == 'pending') {
+      nextStatus = 'in-progress';
+    } else if (todo.status == 'in-progress') {
+      nextStatus = 'completed';
+    } else {
+      nextStatus = 'pending';
+    }
 
     final updated = todo.copyWith(status: nextStatus);
-    
-    // Update locally
     final index = todos.indexWhere((t) => t.id == todo.id);
     if (index != -1) {
       todos[index] = updated;
@@ -98,30 +104,25 @@ class TodoController extends GetxController {
       _saveToCache();
     }
 
-    // Update remote
     try {
-      await Supabase.instance.client
+      await _db
           .from('todos')
-          .update({'status': nextStatus})
-          .eq('id', todo.id);
+          .update({'status': nextStatus}).eq('id', todo.id);
     } catch (e) {
-       Get.snackbar('Error', 'Failed to update remote status');
+      Get.snackbar('Error', 'Failed to update status',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 
   Future<void> deleteTodo(String id) async {
-    // Update locally
     todos.removeWhere((t) => t.id == id);
     _saveToCache();
 
-    // Update remote
     try {
-      await Supabase.instance.client
-          .from('todos')
-          .delete()
-          .eq('id', id);
+      await _db.from('todos').delete().eq('id', id);
     } catch (e) {
-      Get.snackbar('Error', 'Failed to delete todo');
+      Get.snackbar('Error', 'Failed to delete todo',
+          snackPosition: SnackPosition.BOTTOM);
     }
   }
 }

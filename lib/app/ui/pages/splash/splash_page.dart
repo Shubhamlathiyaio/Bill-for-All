@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../controllers/splash_controller.dart';
 import '../../widgets/get_it_hook.dart';
 import '../../widgets/system_ui_overlay.dart';
-import '../../../utils/themes/k_colors.dart';
 import '../../../utils/themes/app_styles.dart';
+import '../../../utils/helpers/extensions.dart';
 import '../../../utils/constants/app_strings.dart';
 
 class SplashPage extends GetItHook<SplashController> {
@@ -71,9 +71,10 @@ class _SplashBodyState extends State<_SplashBody>
   @override
   Widget build(BuildContext context) {
     final styles = AppStyles.of(context);
+    final colors = context.colors;
 
     return Scaffold(
-      backgroundColor: KColors.bg0,
+      backgroundColor: colors.bg0,
       body: Center(
         child: AnimatedBuilder(
           animation: _animController,
@@ -89,14 +90,14 @@ class _SplashBodyState extends State<_SplashBody>
                     height: 88,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(24),
-                      gradient: const LinearGradient(
-                        colors: [KColors.primary, KColors.secondary],
+                      gradient: LinearGradient(
+                        colors: [colors.primary, colors.secondary],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: KColors.primary.changeOpacity(0.45),
+                          color: colors.primary.changeOpacity(0.45),
                           blurRadius: 32,
                           spreadRadius: 4,
                         ),
@@ -104,7 +105,7 @@ class _SplashBodyState extends State<_SplashBody>
                     ),
                     child: const Icon(
                       Icons.bolt_rounded,
-                      color: KColors.white,
+                      color: Colors.white,
                       size: 48,
                     ),
                   ),
@@ -122,7 +123,7 @@ class _SplashBodyState extends State<_SplashBody>
                     child: CircularProgressIndicator(
                       strokeWidth: 2.5,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        KColors.white.changeOpacity(0.3),
+                        colors.textPrimary.changeOpacity(0.3),
                       ),
                     ),
                   ),
@@ -136,7 +137,3 @@ class _SplashBodyState extends State<_SplashBody>
   }
 }
 
-// Extension for Color on non-context usage in splash
-extension _ColorX on Color {
-  Color changeOpacity(double o) => withValues(alpha: o);
-}

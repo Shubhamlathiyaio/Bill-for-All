@@ -8,18 +8,18 @@ class AppColors extends ThemeExtension<AppColors> {
   const AppColors({
     this.primary = KColors.primary,
     this.secondary = KColors.secondary,
-    this.bg0 = KColors.bg0,
-    this.bg1 = KColors.bg1,
-    this.bg2 = KColors.bg2,
+    this.bg0 = KColors.lightBg0,
+    this.bg1 = KColors.lightBg1,
+    this.bg2 = KColors.lightBg2,
     this.error = KColors.error,
     this.success = KColors.success,
     this.warning = KColors.warning,
     this.white = KColors.white,
-    this.textPrimary = KColors.white,
-    this.textSecondary = const Color(0xFFAAAAAA),
-    this.textMuted = const Color(0xFF555566),
-    this.fieldColor = KColors.bg1,
-    this.borderColor = const Color(0xFF252540),
+    this.textPrimary = KColors.black,
+    this.textSecondary = const Color(0xFF555566),
+    this.textMuted = const Color(0xFF9999AA),
+    this.fieldColor = KColors.lightBg2,
+    this.borderColor = const Color(0xFFDDDDEE),
     this.gradientStart = KColors.primary,
     this.gradientEnd = KColors.secondary,
   });
@@ -40,6 +40,18 @@ class AppColors extends ThemeExtension<AppColors> {
   final Color borderColor;
   final Color gradientStart;
   final Color gradientEnd;
+
+  /// Dark theme colors
+  static const AppColors dark = AppColors(
+    bg0: KColors.bg0,
+    bg1: KColors.bg1,
+    bg2: KColors.bg2,
+    textPrimary: KColors.white,
+    textSecondary: Color(0xFFAAAAAA),
+    textMuted: Color(0xFF555566),
+    fieldColor: KColors.bg1,
+    borderColor: Color(0xFF252540),
+  );
 
   static AppColors of(BuildContext context) =>
       Theme.of(context).extension<AppColors>() ?? const AppColors();

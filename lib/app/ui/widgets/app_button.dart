@@ -63,7 +63,7 @@ class AppButton extends StatelessWidget {
                   style: context.styles.s16w600White.copyWith(
                     color: isActive
                         ? colors.white
-                        : colors.white.changeOpacity(0.3),
+                        : colors.textPrimary.changeOpacity(0.3),
                   ),
                 ),
         ),

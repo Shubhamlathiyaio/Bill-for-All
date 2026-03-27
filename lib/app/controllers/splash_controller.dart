@@ -1,31 +1,34 @@
 import 'package:get/get.dart';
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../core/constants/supabase_constants.dart';
+import '../data/services/tenant_service.dart';
+import '../data/services/user_prefs_service.dart';
 import '../routes/app_routes.dart';
+import '../utils/helpers/injectable/injectable.dart';
 
 @lazySingleton
 class SplashController extends GetxController {
-  void navigateAfterSplash() async {
-    final supabase = Supabase.instance.client;
-    final session = supabase.auth.currentSession;
+  Future<void> navigateAfterSplash() async {
+    final session = Supabase.instance.client.auth.currentSession;
 
+    // No session → start from language selection (full onboarding)
     if (session == null) {
       Get.offAllNamed(AppRoutes.language);
       return;
     }
 
-    try {
-      final rows = await supabase.rpc(SupabaseConstants.getMyWorkspace);
-      final workspace = (rows as List).isNotEmpty ? rows[0] : null;
-      final supabaseUrl = workspace?['supabase_url'];
-      if (supabaseUrl != null && (supabaseUrl as String).isNotEmpty) {
-        Get.offAllNamed(AppRoutes.home);
-      } else {
-        Get.offAllNamed(AppRoutes.waiting);
-      }
-    } catch (_) {
-      Get.offAllNamed(AppRoutes.waiting);
+    // Session exists → try to restore tenant client from cached creds
+    await getIt<TenantService>().init();
+
+    // Check if user already selected modules locally
+    final savedModules = await getIt<UserPrefsService>().loadActiveModules();
+
+    if (savedModules.isEmpty) {
+      // Logged in but no module selected yet → go pick a module
+      Get.offAllNamed(AppRoutes.moduleSelection);
+    } else {
+      // Fully set up → go straight to home shell
+      Get.offAllNamed(AppRoutes.home);
     }
   }
 }

@@ -18,8 +18,8 @@ class Poppins extends TextStyle {
 @immutable
 class AppStyles extends ThemeExtension<AppStyles> {
   AppStyles({
-    Color textColor = KColors.white,
-    Color mutedColor = const Color(0xFFAAAAAA),
+    Color textColor = KColors.black,
+    Color mutedColor = const Color(0xFF9999AA),
     Color primaryColor = KColors.primary,
     Color errorColor = KColors.error,
   })  : s11w400Muted = Poppins(fontSize: 11, fontWeight: FontWeight.w400, color: mutedColor, height: 1.3),
@@ -40,6 +40,12 @@ class AppStyles extends ThemeExtension<AppStyles> {
         s30w700White = Poppins(fontSize: 30, fontWeight: FontWeight.w700, color: textColor, letterSpacing: -0.4, height: 1.2),
         s36w700White = Poppins(fontSize: 36, fontWeight: FontWeight.w700, color: textColor, letterSpacing: -0.5),
         s13w400Error = Poppins(fontSize: 13, fontWeight: FontWeight.w400, color: errorColor, height: 1.4);
+
+  /// Dark theme variant factory
+  factory AppStyles.dark() => AppStyles(
+        textColor: KColors.white,
+        mutedColor: const Color(0xFFAAAAAA),
+      );
 
   final TextStyle s11w400Muted;
   final TextStyle s12w400Muted;
