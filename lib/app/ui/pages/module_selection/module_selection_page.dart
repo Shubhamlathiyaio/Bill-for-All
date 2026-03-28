@@ -69,7 +69,7 @@ class _ModuleBodyState extends State<_ModuleBody>
     _animCtrl = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 500));
     _fadeAnim = Tween<double>(begin: 0, end: 1).animate(_animCtrl);
-    _animCtrl.forward();
+    _animCtrl.forward(); 
   }
 
   @override
@@ -235,10 +235,11 @@ class _ModuleBodyState extends State<_ModuleBody>
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Submit error (only shows submit/session errors, not fetch errors)
+                    // Submit error — only show real errors, not loading status strings
                     Obx(() {
                       final err = ctrl.error.value;
-                      if (err == null || ctrl.modules.isEmpty) {
+                      // Hide during loading (status messages) or when modules aren't loaded yet
+                      if (err == null || ctrl.modules.isEmpty || ctrl.isLoading.value) {
                         return const SizedBox.shrink();
                       }
                       return Container(

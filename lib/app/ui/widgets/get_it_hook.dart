@@ -22,13 +22,26 @@ abstract class GetItHook<T extends GetxController> extends StatefulWidget {
 
 class _GetItHookState<T extends GetxController> extends State<GetItHook<T>> {
   @override
+  void initState() {
+    super.initState();
+    if (!Get.isRegistered<T>()) {
+      Get.put<T>(widget.controller, permanent: !widget.autoDispose);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) => widget.build(context);
 
   @override
   void dispose() {
-    super.dispose();
-    if (widget.autoDispose && getIt.isRegistered<T>()) {
-      getIt.resetLazySingleton<T>();
+    if (widget.autoDispose) {
+      if (Get.isRegistered<T>()) {
+        Get.delete<T>(force: true);
+      }
+      if (getIt.isRegistered<T>()) {
+        getIt.resetLazySingleton<T>();
+      }
     }
+    super.dispose();
   }
 }

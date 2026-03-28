@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../../utils/helpers/extensions.dart';
 
 /// AppButton — gradient primary button.
 /// Never use ElevatedButton directly in pages.
 class AppButton extends StatelessWidget {
-  const AppButton({
-    super.key,
-    required this.title,
-    required this.onPressed,
-    this.isLoading = false,
-    this.enabled = true,
-  });
+  const AppButton({super.key, required this.title, required this.onPressed, this.isLoading = false, this.enabled = true});
 
   final String title;
   final VoidCallback? onPressed;
@@ -30,15 +25,7 @@ class AppButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           gradient: isActive ? colors.primaryGradient : null,
           color: isActive ? null : colors.bg1,
-          boxShadow: isActive
-              ? [
-                  BoxShadow(
-                    color: colors.primary.changeOpacity(0.35),
-                    blurRadius: 20,
-                    offset: const Offset(0, 6),
-                  ),
-                ]
-              : null,
+          boxShadow: isActive ? [BoxShadow(color: colors.primary.changeOpacity(0.35), blurRadius: 20, offset: const Offset(0, 6))] : null,
         ),
         child: ElevatedButton(
           onPressed: isActive ? onPressed : null,
@@ -46,8 +33,7 @@ class AppButton extends StatelessWidget {
             backgroundColor: Colors.transparent,
             shadowColor: Colors.transparent,
             disabledBackgroundColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           ),
           child: isLoading
               ? const SizedBox(
@@ -55,17 +41,10 @@ class AppButton extends StatelessWidget {
                   height: 22,
                   child: CircularProgressIndicator(
                     strokeWidth: 2.5,
-                    valueColor: AlwaysStoppedAnimation(Colors.white),
+                    valueColor: AlwaysStoppedAnimation(Colors.grey), // here should be app theme gradient color
                   ),
                 )
-              : Text(
-                  title,
-                  style: context.styles.s16w600White.copyWith(
-                    color: isActive
-                        ? colors.white
-                        : colors.textPrimary.changeOpacity(0.3),
-                  ),
-                ),
+              : Text(title, style: context.styles.s16w600White.copyWith(color: isActive ? colors.white : colors.textPrimary.changeOpacity(0.3))),
         ),
       ),
     );

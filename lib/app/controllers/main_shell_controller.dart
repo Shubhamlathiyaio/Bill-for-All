@@ -19,6 +19,10 @@ class MainShellController extends GetxController {
 
   final currentIndex = 0.obs;
 
+  /// True while we are reading saved module IDs from SharedPreferences.
+  /// The shell must NOT make routing decisions until this is false.
+  final isLoadingPrefs = true.obs;
+
   /// Active module ids loaded from prefs (e.g. ['todo'])
   final activeModuleIds = <String>[].obs;
 
@@ -37,14 +41,20 @@ class MainShellController extends GetxController {
   }
 
   Future<void> _load() async {
+    isLoadingPrefs.value = true;
     final ids = await _prefs.loadActiveModules();
     activeModuleIds.assignAll(ids);
     _rebuildTabs();
+    isLoadingPrefs.value = false;
   }
 
   void _rebuildTabs() {
+    // Normalise to lowercase so IDs from Supabase (e.g. 'Todo') match the
+    // registry keys (e.g. 'todo').
     moduleTabs.assignAll(
-      ModuleRegistry.tabsForModules(activeModuleIds),
+      ModuleRegistry.tabsForModules(
+        activeModuleIds.map((id) => id.toLowerCase()).toList(),
+      ),
     );
   }
 
@@ -58,7 +68,9 @@ class MainShellController extends GetxController {
     currentIndex.value = 0;
   }
 
-  /// True when no modules have been selected yet.
+  /// True when no modules have been selected yet (checks saved IDs, not
+  /// resolved tabs, so a casing mismatch in the registry doesn't trigger
+  /// a redirect back to module selection).
   bool get hasNoModules => activeModuleIds.isEmpty;
 
   /// Navigate to module selection (used from Profile).

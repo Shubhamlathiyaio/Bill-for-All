@@ -1,3 +1,4 @@
-[info] The member 'refresh' overrides an inherited member but isn't annotated with '@override' (D:\Flutter\BillForAll\bill_for_all\lib\app\controllers\dashboard_controller.dart:27:16)
-[error] Target of URI doesn't exist: '../module_selection/module_selection_page.dart' (D:\Flutter\BillForAll\bill_for_all\lib\app\ui\pages\shell\main_shell_page.dart:10:8)
-[error] The name 'ModuleSelectionPage' isn't a class (D:\Flutter\BillForAll\bill_for_all\lib\app\ui\pages\shell\main_shell_page.dart:25:22)
+[info] The member 'refresh' overrides an inherited member but isn't annotated with '@override' (D:\Flutter\BillForAll\bill_for_all\lib\app\controllers\dashboard_controller.dart:22:16)
+[warning] Unnecessary cast (D:\Flutter\BillForAll\bill_for_all\lib\app\controllers\todo_controller.dart:163:42)
+[info] 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss (D:\Flutter\BillForAll\bill_for_all\lib\app\ui\pages\todo\todo_add_edit_page.dart:209:54)
+[info] 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss (D:\Flutter\BillForAll\bill_for_all\lib\app\ui\pages\todo\todo_module_page.dart:798:65)

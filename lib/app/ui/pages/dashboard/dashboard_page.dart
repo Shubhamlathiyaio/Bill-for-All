@@ -38,10 +38,10 @@ class _Body extends StatelessWidget {
         child: RefreshIndicator(
           color: colors.primary,
           backgroundColor: colors.bg1,
-          onRefresh: controller.refresh,
+          onRefresh: controller.refreshData,
           child: CustomScrollView(
             slivers: [
-              // ── Header ────────────────────────────────────────────────
+              // ── Header ──────────────────────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(24, 28, 24, 8),
@@ -76,7 +76,7 @@ class _Body extends StatelessWidget {
                 ),
               ),
 
-              // ── Module sections ───────────────────────────────────────
+              // ── Module sections ──────────────────────────────────────────
               SliverToBoxAdapter(
                 child: Obx(() {
                   final ids = shell.activeModuleIds;
@@ -160,8 +160,8 @@ class _TodoSummarySection extends StatelessWidget {
     return Obx(() {
       final total = controller.totalTodos;
       final pending = controller.pendingTodos;
-      final completed = controller.completedTodos;
-      final recent = controller.recentTodos;
+      final done = controller.completedTodos;
+      final recent = controller.recentTodos.cast<TodoModel>();
 
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -211,7 +211,7 @@ class _TodoSummarySection extends StatelessWidget {
                 const SizedBox(width: 10),
                 _StatCard(
                     label: 'Done',
-                    value: '$completed',
+                    value: '$done',
                     color: colors.success,
                     styles: styles),
               ],
@@ -286,15 +286,15 @@ class _RecentTodoRow extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            todo.status == 'completed'
+            todo.isDone
                 ? Icons.check_circle_rounded
-                : todo.status == 'in-progress'
+                : todo.isInProgress
                     ? Icons.play_circle_fill_rounded
                     : Icons.radio_button_unchecked_rounded,
             size: 18,
-            color: todo.status == 'completed'
+            color: todo.isDone
                 ? colors.success
-                : todo.status == 'in-progress'
+                : todo.isInProgress
                     ? colors.warning
                     : colors.textPrimary.changeOpacity(0.3),
           ),
@@ -304,10 +304,8 @@ class _RecentTodoRow extends StatelessWidget {
               todo.title,
               style: styles.s14w400White.copyWith(
                 fontSize: 13,
-                decoration: todo.status == 'completed'
-                    ? TextDecoration.lineThrough
-                    : null,
-                color: todo.status == 'completed'
+                decoration: todo.isDone ? TextDecoration.lineThrough : null,
+                color: todo.isDone
                     ? colors.textPrimary.changeOpacity(0.4)
                     : null,
               ),

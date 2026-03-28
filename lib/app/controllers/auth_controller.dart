@@ -6,8 +6,8 @@ import '../routes/app_routes.dart';
 
 @lazySingleton
 class AuthController extends GetxController {
-  final emailCtrl = TextEditingController();
-  final passCtrl = TextEditingController();
+  final emailCtrl = TextEditingController(text: 'test@gmail.com');
+  final passCtrl = TextEditingController(text:'Test@123');
   final nameCtrl = TextEditingController();
 
   final loginIsLoading = false.obs;
