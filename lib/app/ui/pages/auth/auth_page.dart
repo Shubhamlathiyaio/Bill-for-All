@@ -7,32 +7,19 @@ import '../../widgets/app_button.dart';
 import '../../../utils/helpers/extensions.dart';
 import '../../../utils/constants/app_strings.dart';
 
-class AuthPage extends GetItHook<AuthController> {
+class AuthPage extends StatefulWidget {
   const AuthPage({super.key});
 
   @override
-  bool get autoDispose => true;
-
-  @override
-  Widget build(BuildContext context) {
-    return OnboardingSystemUiOverlayStyle(
-      child: _AuthBody(controller: controller),
-    );
-  }
+  State<AuthPage> createState() => _AuthPageState();
 }
 
-class _AuthBody extends StatefulWidget {
-  const _AuthBody({required this.controller});
-  final AuthController controller;
-
-  @override
-  State<_AuthBody> createState() => _AuthBodyState();
-}
-
-class _AuthBodyState extends State<_AuthBody>
+class _AuthPageState extends GetItHookState<AuthController, AuthPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  AuthController get ctrl => widget.controller;
+
+  @override
+  bool get autoDispose => true;
 
   @override
   void initState() {
@@ -51,81 +38,83 @@ class _AuthBodyState extends State<_AuthBody>
     final colors = context.colors;
     final styles = context.styles;
 
-    return Scaffold(
-      backgroundColor: colors.bg0,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            children: [
-              const SizedBox(height: 48),
-              // Logo
-              Column(
-                children: [
-                  Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
-                      gradient: colors.primaryGradientDiagonal,
-                      boxShadow: [
-                        BoxShadow(
-                          color: colors.primary.changeOpacity(0.4),
-                          blurRadius: 24,
-                          spreadRadius: 2,
-                        ),
-                      ],
-                    ),
-                    child: const Icon(Icons.bolt_rounded,
-                        color: Colors.white, size: 34),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(AppStrings.welcomeTo, style: styles.s24w700White),
-                  const SizedBox(height: 6),
-                  Text(AppStrings.signInOrCreate,
-                      style: styles.s14w400Muted),
-                ],
-              ),
-              const SizedBox(height: 36),
-              // Tab bar
-              Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: colors.bg1,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TabBar(
-                  controller: _tabController,
-                  indicator: BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    gradient: colors.primaryGradient,
-                  ),
-                  indicatorSize: TabBarIndicatorSize.tab,
-                  dividerColor: Colors.transparent,
-                  labelColor: colors.white,
-                  unselectedLabelColor:
-                      colors.textPrimary.changeOpacity(0.38),
-                  labelStyle: styles.s14w700White,
-                  tabs: const [
-                    Tab(text: 'Log In'),
-                    Tab(text: 'Sign Up'),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                height: 420,
-                child: TabBarView(
-                  controller: _tabController,
-                  physics: const NeverScrollableScrollPhysics(),
+    return OnboardingSystemUiOverlayStyle(
+      child: Scaffold(
+        backgroundColor: colors.bg0,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Column(
+              children: [
+                const SizedBox(height: 48),
+                // Logo
+                Column(
                   children: [
-                    _LoginForm(ctrl: ctrl),
-                    _SignUpForm(ctrl: ctrl),
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        gradient: colors.primaryGradientDiagonal,
+                        boxShadow: [
+                          BoxShadow(
+                            color: colors.primary.changeOpacity(0.4),
+                            blurRadius: 24,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(Icons.bolt_rounded,
+                          color: Colors.white, size: 34),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(AppStrings.welcomeTo, style: styles.s24w700White),
+                    const SizedBox(height: 6),
+                    Text(AppStrings.signInOrCreate,
+                        style: styles.s14w400Muted),
                   ],
                 ),
-              ),
-              const SizedBox(height: 32),
-            ],
+                const SizedBox(height: 36),
+                // Tab bar
+                Container(
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: colors.bg1,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: TabBar(
+                    controller: _tabController,
+                    indicator: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                      gradient: colors.primaryGradient,
+                    ),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    dividerColor: Colors.transparent,
+                    labelColor: colors.white,
+                    unselectedLabelColor:
+                        colors.textPrimary.changeOpacity(0.38),
+                    labelStyle: styles.s14w700White,
+                    tabs: const [
+                      Tab(text: 'Log In'),
+                      Tab(text: 'Sign Up'),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  height: 420,
+                  child: TabBarView(
+                    controller: _tabController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _LoginForm(ctrl: controller),
+                      _SignUpForm(ctrl: controller),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 32),
+              ],
+            ),
           ),
         ),
       ),

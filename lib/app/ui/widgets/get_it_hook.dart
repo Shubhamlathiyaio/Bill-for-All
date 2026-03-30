@@ -1,47 +1,79 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 import '../../utils/helpers/injectable/injectable.dart';
 
-/// Base class for every page widget.
-/// Extends StatefulWidget — hooks into lifecycle to optionally
-/// reset the lazySingleton on page pop (autoDispose: true).
 abstract class GetItHook<T extends GetxController> extends StatefulWidget {
-  const GetItHook({super.key});
+  const GetItHook({super.key, T? controller}) : _controller = controller;
 
-  /// Set to true for screen-scoped controllers (reset on pop).
-  /// Set to false for root/persistent controllers (tabs, bottom nav).
+  @override
+  State<GetItHook> createState() => _GetItHookState<T>();
+
+  void _onInit() {
+    controller.onInit();
+    onInit();
+  }
+
+  void onInit() {}
+
   bool get autoDispose;
 
   Widget build(BuildContext context);
 
-  T get controller => getIt<T>();
+  T get controller => _controller ?? getIt<T>();
 
-  @override
-  State<GetItHook<T>> createState() => _GetItHookState<T>();
-}
+  final T? _controller;
 
-class _GetItHookState<T extends GetxController> extends State<GetItHook<T>> {
-  @override
-  void initState() {
-    super.initState();
-    if (!Get.isRegistered<T>()) {
-      Get.put<T>(widget.controller, permanent: !widget.autoDispose);
+  void onDispose() {}
+
+  void _unRegister() {
+    if (autoDispose && getIt.isRegistered<T>()) {
+      getIt.resetLazySingleton<T>();
     }
   }
+}
 
+class _GetItHookState<T extends GetxController> extends State<GetItHook> {
   @override
   Widget build(BuildContext context) => widget.build(context);
 
   @override
+  void initState() {
+    super.initState();
+    widget._onInit();
+  }
+
+  @override
   void dispose() {
-    if (widget.autoDispose) {
-      if (Get.isRegistered<T>()) {
-        Get.delete<T>(force: true);
-      }
-      if (getIt.isRegistered<T>()) {
-        getIt.resetLazySingleton<T>();
-      }
+    widget.onDispose();
+    super.dispose();
+    widget._unRegister();
+  }
+}
+
+abstract class GetItHookState<T extends GetxController, S extends StatefulWidget>
+    extends State<S> {
+  T get controller => getIt<T>();
+
+  @override
+  void initState() {
+    super.initState();
+    controller.onInit();
+    onInit();
+  }
+
+  void onInit() {}
+
+  void _unRegister() {
+    if (autoDispose && getIt.isRegistered<T>()) {
+      getIt.resetLazySingleton<T>();
     }
+  }
+
+  @override
+  void dispose() {
+    _unRegister();
     super.dispose();
   }
+
+  bool get autoDispose;
 }

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:bill_for_all/app/utils/constants/supabase_constants.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -12,7 +13,15 @@ class TenantService {
   final Map<String, SupabaseClient> _clients = {};
 
   /// Retrieves the Supabase client for a specific module by its ID.
-  SupabaseClient? getClient(String moduleId) => _clients[moduleId];
+  SupabaseClient? getClient(String moduleId) {
+    final client = _clients[moduleId];
+    if (client != null) {
+      log('--- TenantService: Returning client for module [$moduleId] -> ${client.rest.url}');
+    } else {
+      log('--- TenantService: No specialized client for module [$moduleId]');
+    }
+    return client;
+  }
 
   bool isReady(String moduleId) => _clients.containsKey(moduleId);
 
@@ -41,6 +50,8 @@ class TenantService {
            // Since Flutter Supabase plugin uses a singleton pattern internally sometimes for named instances, 
            // be cautious not to create millions, but one per active module is fine.
           _clients[moduleId] = SupabaseClient(url, anonKey);
+          log('Client initialized for module: $moduleId');
+          log('====================================All Clients: $_clients');
         }
       }
       return _clients.isNotEmpty;
@@ -59,7 +70,9 @@ class TenantService {
       final moduleId = entry.key;
       final url = entry.value['url']!;
       final anonKey = entry.value['anonKey']!;
+      
       _clients[moduleId] = SupabaseClient(url, anonKey);
+      log('--- TenantService: Initialized client for [$moduleId] -> $url');
     }
   }
 

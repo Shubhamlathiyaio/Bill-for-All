@@ -1,19 +1,22 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../data/models/todo_model.dart';
+
 import '../data/models/todo_category_model.dart';
-import '../data/services/tenant_service.dart';
-import '../utils/helpers/injectable/injectable.dart';
+import '../data/models/todo_model.dart';
+import '../data/repositories/todo_repository.dart';
 
 @lazySingleton
 class TodoController extends GetxController {
-  TodoController(this._storage);
+  TodoController(this._storage, this._repo);
 
   final GetStorage _storage;
+  final TodoRepository _repo;
+
   static const _kTodos = 'cached_todos';
   static const _kCategories = 'cached_categories';
 
@@ -45,24 +48,39 @@ class TodoController extends GetxController {
   }
 
   /// Save a new task using the current form state.
-  Future<void> saveNewTodo() async {
+  Future<void> addTodo() async {
     final title = titleCtrl.text.trim();
     if (title.isEmpty) return;
     formIsSaving.value = true;
     try {
-      await addTodo(
-        title,
-        description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
-        categoryId: formCategoryId.value,
-        dueDate: formDueDate.value,
-      );
+      await Supabase.instance.client.from('todos').insert({'title': title});
+      todos.insert(0, TodoModel.fromJson({'id': DateTime.now().millisecondsSinceEpoch.toString(), 'title': title, 'status': 'pending', 'created_at': DateTime.now().toIso8601String()}));
+      await _saveTodosToCache();
       Get.back();
-    } catch (_) {
-      // Error snackbar already shown inside addTodo.
+    } catch (e) {
+      Get.snackbar('Error', 'Failed to add task: $e', snackPosition: SnackPosition.BOTTOM);
     } finally {
       formIsSaving.value = false;
     }
   }
+  // Future<void> saveNewTodo() async {
+  //   final title = titleCtrl.text.trim();
+  //   if (title.isEmpty) return;
+  //   formIsSaving.value = true;
+  //   try {
+  //     await addTodo(
+  //       title,
+  //       description: descCtrl.text.trim().isEmpty ? null : descCtrl.text.trim(),
+  //       categoryId: formCategoryId.value,
+  //       dueDate: formDueDate.value,
+  //     );
+  //     Get.back();
+  //   } catch (_) {
+  //     // Error snackbar already shown inside addTodo.
+  //   } finally {
+  //     formIsSaving.value = false;
+  //   }
+  // }
 
   /// Open the system date picker and store the result reactively.
   Future<void> pickDueDate(BuildContext context) async {
@@ -98,10 +116,6 @@ class TodoController extends GetxController {
   /// Filter: 'All' | 'Pending' | 'In Progress' | 'Done'
   final currentFilter = 'All'.obs;
 
-  /// Returns the module's own Supabase client, falling back to main if not set.
-  SupabaseClient get _db =>
-      getIt<TenantService>().getClient('todo') ?? Supabase.instance.client;
-
   // ── Computed counts ──────────────────────────────────────────────────────
 
   int get totalCount => todos.length;
@@ -110,8 +124,7 @@ class TodoController extends GetxController {
   int get doneCount => todos.where((t) => t.isDone).length;
 
   List<TodoModel> get filteredTodos {
-    final list = todos.toList()
-      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+    final list = todos.toList()..sort((a, b) => b.createdAt.compareTo(a.createdAt));
     switch (currentFilter.value) {
       case 'Pending':
         return list.where((t) => t.isPending).toList();
@@ -141,7 +154,6 @@ class TodoController extends GetxController {
     super.onClose();
   }
 
-
   // ── Cache ────────────────────────────────────────────────────────────────
 
   void _loadFromCache() {
@@ -149,32 +161,27 @@ class TodoController extends GetxController {
     if (rawTodos != null) {
       try {
         final list = jsonDecode(rawTodos) as List;
-        todos.value =
-            list.map((e) => TodoModel.fromJson(e as Map<String, dynamic>)).toList();
+        todos.value = list.map((e) => TodoModel.fromJson(e as Map<String, dynamic>)).toList();
       } catch (_) {}
     }
     final rawCats = _storage.read<String>(_kCategories);
     if (rawCats != null) {
       try {
         final list = jsonDecode(rawCats) as List;
-        categories.value = list
-            .map((e) => TodoCategoryModel.fromJson(e as Map<String, dynamic>))
-            .toList();
+        categories.value = list.map((e) => TodoCategoryModel.fromJson(e as Map<String, dynamic>)).toList();
       } catch (_) {}
     }
   }
 
   Future<void> _saveTodosToCache() async {
-    await _storage.write(
-        _kTodos, jsonEncode(todos.map((e) => e.toJson()).toList()));
+    await _storage.write(_kTodos, jsonEncode(todos.map((e) => e.toJson()).toList()));
   }
 
   Future<void> _saveCategoriesToCache() async {
-    await _storage.write(
-        _kCategories, jsonEncode(categories.map((e) => e.toJson()).toList()));
+    await _storage.write(_kCategories, jsonEncode(categories.map((e) => e.toJson()).toList()));
   }
 
-  // ── Remote ───────────────────────────────────────────────────────────────
+  // ── Remote (Delegated to Repository) ─────────────────────────────────────
 
   Future<void> fetchCategories() async {
     isCategoriesLoading.value = true;
@@ -182,15 +189,8 @@ class TodoController extends GetxController {
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) return;
 
-      final response = await _db
-          .from('todo_categories')
-          .select()
-          .eq('user_id', user.id)
-          .order('name');
-
-      categories.value = response
-          .map((e) => TodoCategoryModel.fromJson(e))
-          .toList();
+      final res = await _repo.fetchCategories(user.id);
+      categories.value = res;
       await _saveCategoriesToCache();
     } catch (_) {
       // Background fetch — silent fail
@@ -205,54 +205,38 @@ class TodoController extends GetxController {
       final user = Supabase.instance.client.auth.currentUser;
       if (user == null) return;
 
-      final response = await _db
-          .from('todos')
-          .select()
-          .eq('user_id', user.id)
-          .order('created_at', ascending: false);
-
-      todos.value = response.map((e) => TodoModel.fromJson(e)).toList();
+      final res = await _repo.fetchTodos(user.id);
+      todos.value = res;
       await _saveTodosToCache();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to fetch tasks',
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('Error', 'Failed to fetch tasks', snackPosition: SnackPosition.BOTTOM);
     } finally {
       isLoading.value = false;
     }
   }
 
-  Future<void> addTodo(
-    String title, {
-    String? description,
-    String? categoryId,
-    DateTime? dueDate,
-  }) async {
-    final user = Supabase.instance.client.auth.currentUser;
-    if (user == null) return;
+  // Future<void> addTodo(String title, {String? description, String? categoryId, DateTime? dueDate}) async {
+  //   final user = Supabase.instance.client.auth.currentUser;
+  //   if (user == null) return;
 
-    try {
-      final response = await _db
-          .from('todos')
-          .insert({
-            'title': title.trim(),
-            if (description != null && description.trim().isNotEmpty)
-              'description': description.trim(),
-            if (categoryId != null) 'category_id': categoryId,
-            if (dueDate != null) 'due_date': dueDate.toIso8601String(),
-            'status': 'pending',
-            'user_id': user.id,
-          })
-          .select()
-          .single();
+  //   try {
+  //     final data = {
+  //       'title': title.trim(),
+  //       if (description != null && description.trim().isNotEmpty) 'description': description.trim(),
+  //       if (categoryId != null) 'category_id': categoryId,
+  //       if (dueDate != null) 'due_date': dueDate.toIso8601String(),
+  //       'status': 'pending',
+  //       'user_id': user.id,
+  //     };
 
-      todos.insert(0, TodoModel.fromJson(response));
-      await _saveTodosToCache();
-    } catch (e) {
-      Get.snackbar('Error', 'Failed to add task: $e',
-          snackPosition: SnackPosition.BOTTOM);
-      rethrow;
-    }
-  }
+  //     final response = await _repo.addTodo(data);
+  //     todos.insert(0, TodoModel.fromJson(response));
+  //     await _saveTodosToCache();
+  //   } catch (e) {
+  //     Get.snackbar('Error', 'Failed to add task: $e', snackPosition: SnackPosition.BOTTOM);
+  //     rethrow;
+  //   }
+  // }
 
   Future<void> updateStatus(TodoModel todo, String newStatus) async {
     final index = todos.indexWhere((t) => t.id == todo.id);
@@ -262,7 +246,7 @@ class TodoController extends GetxController {
       _saveTodosToCache();
     }
     try {
-      await _db.from('todos').update({'status': newStatus}).eq('id', todo.id);
+      await _repo.updateTodoStatus(todo.id, newStatus);
     } catch (_) {
       // Revert on failure
       if (index != -1) {
@@ -270,8 +254,7 @@ class TodoController extends GetxController {
         todos.refresh();
         _saveTodosToCache();
       }
-      Get.snackbar('Error', 'Failed to update task',
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('Error', 'Failed to update task', snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -280,14 +263,13 @@ class TodoController extends GetxController {
     todos.removeWhere((t) => t.id == id);
     await _saveTodosToCache();
     try {
-      await _db.from('todos').delete().eq('id', id);
+      await _repo.deleteTodo(id);
     } catch (_) {
       if (removed != null) {
         todos.insert(0, removed);
         await _saveTodosToCache();
       }
-      Get.snackbar('Error', 'Failed to delete task',
-          snackPosition: SnackPosition.BOTTOM);
+      Get.snackbar('Error', 'Failed to delete task', snackPosition: SnackPosition.BOTTOM);
     }
   }
 
@@ -298,8 +280,8 @@ class TodoController extends GetxController {
     final next = todo.isPending
         ? 'in-progress'
         : todo.isInProgress
-            ? 'done'
-            : 'pending';
+        ? 'done'
+        : 'pending';
     await updateStatus(todo, next);
   }
 }

@@ -1,3 +1,4 @@
+import 'package:bill_for_all/app/data/services/todo_services.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -8,18 +9,20 @@ import '../../../utils/helpers/extensions.dart';
 import '../../../utils/helpers/injectable/injectable.dart';
 import '../../../utils/themes/app_colors.dart';
 import '../../../utils/themes/app_styles.dart';
+import '../../widgets/get_it_hook.dart';
 
-// ── Tab: To-Do Dashboard ─────────────────────────────────────────────────────
+/// Unified Todo page for the module.
+/// Replaces the previous multi-tab (Dashboard/Tasks) approach for simplicity.
+class TodoModulePage extends GetItHook<TodoController> {
+  const TodoModulePage({super.key});
 
-/// Registered as the "To-Do" tab in the outer MainShell bottom nav.
-class TodoDashboardTab extends StatelessWidget {
-  const TodoDashboardTab({super.key});
+  @override
+  bool get autoDispose => false;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.colors;
     final styles = context.styles;
-    final ctrl = getIt<TodoController>();
 
     return Scaffold(
       backgroundColor: colors.bg0,
@@ -27,14 +30,16 @@ class TodoDashboardTab extends StatelessWidget {
         child: RefreshIndicator(
           color: colors.primary,
           backgroundColor: colors.bg1,
-          onRefresh: ctrl.fetchTodos,
+          onRefresh: () async {
+            await TodoService().getTodos();
+          }, //controller.fetchTodos,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
               // ── Header ────────────────────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
+                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 16),
                   child: Row(
                     children: [
                       Container(
@@ -43,16 +48,12 @@ class TodoDashboardTab extends StatelessWidget {
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
                           gradient: LinearGradient(
-                            colors: [
-                              HexColor.fromHex('#6C63FF'),
-                              HexColor.fromHex('#9B59B6'),
-                            ],
+                            colors: [HexColor.fromHex('#6C63FF'), HexColor.fromHex('#9B59B6')],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                         ),
-                        child: const Icon(Icons.check_circle_outline_rounded,
-                            color: Colors.white, size: 20),
+                        child: const Icon(Icons.check_circle_outline_rounded, color: Colors.white, size: 20),
                       ),
                       const SizedBox(width: 12),
                       Column(
@@ -60,150 +61,112 @@ class TodoDashboardTab extends StatelessWidget {
                         children: [
                           Text('To-Do', style: styles.s24w700White),
                           Obx(() {
-                            final total = ctrl.totalCount;
-                            return Text(
-                              '$total task${total == 1 ? '' : 's'} total',
-                              style: styles.s13w400Muted,
-                            );
+                            final total = controller.totalCount;
+                            return Text('$total task${total == 1 ? '' : 's'} total', style: styles.s13w400Muted);
                           }),
                         ],
                       ),
                       const Spacer(),
-                      Obx(() => ctrl.isLoading.value
-                          ? SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                  strokeWidth: 2, color: colors.primary),
-                            )
-                          : IconButton(
-                              onPressed: ctrl.fetchTodos,
-                              icon: Icon(Icons.refresh_rounded,
-                                  color: colors.textPrimary.changeOpacity(0.5),
-                                  size: 22),
-                            )),
+                      Obx(
+                        () => controller.isLoading.value
+                            ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: colors.primary))
+                            : IconButton(
+                                onPressed: controller.fetchTodos,
+                                icon: Icon(Icons.refresh_rounded, color: colors.textPrimary.changeOpacity(0.5), size: 22),
+                              ),
+                      ),
                     ],
                   ),
                 ),
               ),
 
-              // ── Stats + progress ──────────────────────────────────────
+              // ── Stats Row ─────────────────────────────────────────────
               SliverToBoxAdapter(
                 child: Obx(() {
-                  final total = ctrl.totalCount;
-                  final pending = ctrl.pendingCount;
-                  final done = ctrl.doneCount;
-                  final pct = total == 0 ? 0.0 : done / total;
+                  final total = controller.totalCount;
+                  final pending = controller.pendingCount;
+                  final done = controller.doneCount;
 
                   return Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Row(
-                          children: [
-                            _StatCard(label: 'Total', value: '$total', color: colors.primary, styles: styles),
-                            const SizedBox(width: 10),
-                            _StatCard(label: 'Pending', value: '$pending', color: colors.warning, styles: styles),
-                            const SizedBox(width: 10),
-                            _StatCard(label: 'Done', value: '$done', color: colors.success, styles: styles),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        // Progress card
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: colors.bg1,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                                color: colors.textPrimary.changeOpacity(0.06)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text('Overall progress', style: styles.s14w500White),
-                                  Text(
-                                    '${(pct * 100).round()}%',
-                                    style: styles.s14w500White.copyWith(color: colors.primary),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(6),
-                                child: LinearProgressIndicator(
-                                  value: pct,
-                                  minHeight: 8,
-                                  backgroundColor: colors.textPrimary.changeOpacity(0.08),
-                                  valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text('$done of $total tasks completed', style: styles.s13w400Muted),
-                            ],
-                          ),
-                        ),
+                        _StatCard(label: 'Total', value: '$total', color: colors.primary, styles: styles),
+                        const SizedBox(width: 10),
+                        _StatCard(label: 'Pending', value: '$pending', color: colors.warning, styles: styles),
+                        const SizedBox(width: 10),
+                        _StatCard(label: 'Done', value: '$done', color: colors.success, styles: styles),
                       ],
                     ),
                   );
                 }),
               ),
 
-              // ── Recent tasks header ────────────────────────────────────
+              // ── Filter Chips ──────────────────────────────────────────
               SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 24, 20, 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('Recent Tasks', style: styles.s16w600White),
-                      TextButton(
-                        onPressed: () => Get.toNamed(AppRoutes.todoAddEdit),
-                        child: Text('+ Add', style: styles.s13w600Primary),
-                      ),
-                    ],
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+                  child: Obx(
+                    () => Row(
+                      children: ['All', 'Pending', 'In Progress', 'Done'].map((f) {
+                        final sel = controller.currentFilter.value == f;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: FilterChip(
+                            label: Text(f, style: sel ? styles.s13w600Primary : styles.s13w400Muted),
+                            selected: sel,
+                            onSelected: (_) => controller.setFilter(f),
+                            backgroundColor: colors.bg1,
+                            selectedColor: colors.primary.changeOpacity(0.15),
+                            showCheckmark: false,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                              side: BorderSide(color: sel ? colors.primary : colors.textPrimary.changeOpacity(0.1)),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
               ),
 
-              // ── Task list ─────────────────────────────────────────────
+              // ── Task List ─────────────────────────────────────────────
               SliverPadding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 sliver: Obx(() {
-                  if (ctrl.isLoading.value && ctrl.todos.isEmpty) {
-                    return SliverToBoxAdapter(
+                  // Loading state
+                  if (controller.isLoading.value && controller.todos.isEmpty) {
+                    return const SliverToBoxAdapter(
                       child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(32),
-                          child: CircularProgressIndicator(color: colors.primary),
-                        ),
+                        child: Padding(padding: EdgeInsets.all(32), child: CircularProgressIndicator()),
                       ),
                     );
                   }
-                  final recent = ctrl.todos.take(8).toList();
-                  if (recent.isEmpty) {
-                    return SliverToBoxAdapter(
-                        child: _EmptyState(colors: colors, styles: styles));
+
+                  final list = controller.filteredTodos;
+
+                  // Empty state
+                  if (list.isEmpty) {
+                    return SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _EmptyState(colors: colors, styles: styles),
+                    );
                   }
+
+                  // The list
                   return SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (_, i) {
-                        if (i == recent.length) return const SizedBox(height: 24);
-                        return _TodoRow(
-                          todo: recent[i],
-                          colors: colors,
-                          styles: styles,
-                          onToggle: () => ctrl.updateStatus(
-                              recent[i], recent[i].isDone ? 'pending' : 'done'),
-                          onDelete: () => ctrl.deleteTodo(recent[i].id),
-                        );
-                      },
-                      childCount: recent.length + 1,
-                    ),
+                    delegate: SliverChildBuilderDelegate((_, i) {
+                      if (i == list.length) return const SizedBox(height: 80);
+                      return _TodoRow(
+                        todo: list[i],
+                        colors: colors,
+                        styles: styles,
+                        onToggle: () => controller.toggleStatus(list[i]),
+                        onDelete: () => controller.deleteTodo(list[i].id),
+                      );
+                    }, childCount: list.length + 1),
                   );
                 }),
               ),
@@ -220,121 +183,10 @@ class TodoDashboardTab extends StatelessWidget {
   }
 }
 
-
-
-// ── Tab: Tasks (full list) ────────────────────────────────────────────────────
-
-/// Registered as the "Tasks" tab in the outer MainShell bottom nav.
-class TodoTasksPage extends StatelessWidget {
-  const TodoTasksPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.colors;
-    final styles = context.styles;
-    final ctrl = getIt<TodoController>();
-
-    return Scaffold(
-      backgroundColor: colors.bg0,
-      appBar: AppBar(
-        title: Text('Tasks', style: styles.s14w500White.copyWith(fontSize: 18)),
-        backgroundColor: colors.bg1,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back_rounded,
-              color: colors.textPrimary.changeOpacity(0.8)),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.refresh_rounded,
-                color: colors.textPrimary.changeOpacity(0.8)),
-            onPressed: ctrl.fetchTodos,
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Filter chips
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            child: Obx(() => Row(
-                  children: ['All', 'Pending', 'In Progress', 'Done'].map((f) {
-                    final sel = ctrl.currentFilter.value == f;
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: FilterChip(
-                        label: Text(f,
-                            style: sel
-                                ? styles.s13w600Primary
-                                : styles.s13w400Muted),
-                        selected: sel,
-                        onSelected: (_) => ctrl.setFilter(f),
-                        backgroundColor: colors.bg1,
-                        selectedColor: colors.primary.changeOpacity(0.15),
-                        showCheckmark: false,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                          side: BorderSide(
-                            color: sel
-                                ? colors.primary
-                                : colors.textPrimary.changeOpacity(0.1),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                )),
-          ),
-
-          // Task list
-          Expanded(
-            child: Obx(() {
-              if (ctrl.isLoading.value && ctrl.todos.isEmpty) {
-                return Center(
-                    child: CircularProgressIndicator(color: colors.primary));
-              }
-              final list = ctrl.filteredTodos;
-              if (list.isEmpty) {
-                return _EmptyState(colors: colors, styles: styles);
-              }
-              return ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: list.length,
-                itemBuilder: (_, i) {
-                  final todo = list[i];
-                  return _TodoRow(
-                    todo: todo,
-                    colors: colors,
-                    styles: styles,
-                    onToggle: () => ctrl.toggleStatus(todo),
-                    onDelete: () => ctrl.deleteTodo(todo.id),
-                  );
-                },
-              );
-            }),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: colors.primary,
-        onPressed: () => Get.toNamed(AppRoutes.todoAddEdit),
-        child: const Icon(Icons.add_rounded, color: Colors.white),
-      ),
-    );
-  }
-}
-
 // ── Shared widgets ────────────────────────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.styles,
-  });
+  const _StatCard({required this.label, required this.value, required this.color, required this.styles});
   final String label;
   final String value;
   final Color color;
@@ -352,8 +204,7 @@ class _StatCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(value,
-                style: styles.s24w700White.copyWith(color: color, fontSize: 20)),
+            Text(value, style: styles.s24w700White.copyWith(color: color, fontSize: 20)),
             const SizedBox(height: 3),
             Text(label, style: styles.s11w400Muted),
           ],
@@ -364,13 +215,7 @@ class _StatCard extends StatelessWidget {
 }
 
 class _TodoRow extends StatelessWidget {
-  const _TodoRow({
-    required this.todo,
-    required this.colors,
-    required this.styles,
-    required this.onToggle,
-    required this.onDelete,
-  });
+  const _TodoRow({required this.todo, required this.colors, required this.styles, required this.onToggle, required this.onDelete});
 
   final TodoModel todo;
   final AppColors colors;
@@ -389,8 +234,7 @@ class _TodoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ctrl = getIt<TodoController>();
-    final cat =
-        ctrl.categories.firstWhereOrNull((c) => c.id == todo.categoryId);
+    final cat = ctrl.categories.firstWhereOrNull((c) => c.id == todo.categoryId);
     final catColor = cat != null ? _parseCatColor(cat.color) : null;
 
     return Container(
@@ -413,15 +257,15 @@ class _TodoRow extends StatelessWidget {
                 todo.isDone
                     ? Icons.check_circle_rounded
                     : todo.isInProgress
-                        ? Icons.play_circle_fill_rounded
-                        : Icons.radio_button_unchecked_rounded,
+                    ? Icons.play_circle_fill_rounded
+                    : Icons.radio_button_unchecked_rounded,
                 key: ValueKey(todo.status),
                 size: 22,
                 color: todo.isDone
                     ? colors.success
                     : todo.isInProgress
-                        ? colors.warning
-                        : colors.textPrimary.changeOpacity(0.3),
+                    ? colors.warning
+                    : colors.textPrimary.changeOpacity(0.3),
               ),
             ),
           ),
@@ -436,22 +280,14 @@ class _TodoRow extends StatelessWidget {
                   todo.title,
                   style: styles.s14w500White.copyWith(
                     decoration: todo.isDone ? TextDecoration.lineThrough : null,
-                    color: todo.isDone
-                        ? colors.textPrimary.changeOpacity(0.4)
-                        : colors.textPrimary,
+                    color: todo.isDone ? colors.textPrimary.changeOpacity(0.4) : colors.textPrimary,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (todo.description != null &&
-                    todo.description!.isNotEmpty) ...[
+                if (todo.description != null && todo.description!.isNotEmpty) ...[
                   const SizedBox(height: 4),
-                  Text(
-                    todo.description!,
-                    style: styles.s13w400Muted.copyWith(fontSize: 12),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  Text(todo.description!, style: styles.s13w400Muted.copyWith(fontSize: 12), maxLines: 2, overflow: TextOverflow.ellipsis),
                 ],
                 if (todo.dueDate != null || cat != null) ...[
                   const SizedBox(height: 8),
@@ -461,37 +297,22 @@ class _TodoRow extends StatelessWidget {
                     children: [
                       if (cat != null)
                         Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            // ✅ Fixed: changeOpacity instead of withOpacity
-                            color: (catColor ?? colors.primary)
-                                .changeOpacity(0.2),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(color: (catColor ?? colors.primary).changeOpacity(0.2), borderRadius: BorderRadius.circular(4)),
                           child: Text(
                             cat.name,
-                            style: styles.s13w400Muted.copyWith(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                              color: catColor ?? colors.primary,
-                            ),
+                            style: styles.s13w400Muted.copyWith(fontSize: 10, fontWeight: FontWeight.w600, color: catColor ?? colors.primary),
                           ),
                         ),
                       if (todo.dueDate != null)
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.event_outlined,
-                                size: 12,
-                                color: colors.textPrimary.changeOpacity(0.4)),
+                            Icon(Icons.event_outlined, size: 12, color: colors.textPrimary.changeOpacity(0.4)),
                             const SizedBox(width: 4),
                             Text(
                               '${todo.dueDate!.day}/${todo.dueDate!.month}/${todo.dueDate!.year}',
-                              style: styles.s13w400Muted.copyWith(
-                                fontSize: 10,
-                                color: colors.textPrimary.changeOpacity(0.4),
-                              ),
+                              style: styles.s13w400Muted.copyWith(fontSize: 10, color: colors.textPrimary.changeOpacity(0.4)),
                             ),
                           ],
                         ),
@@ -507,8 +328,7 @@ class _TodoRow extends StatelessWidget {
             width: 32,
             height: 32,
             child: IconButton(
-              icon: Icon(Icons.delete_outline_rounded,
-                  size: 18, color: colors.error.changeOpacity(0.6)),
+              icon: Icon(Icons.delete_outline_rounded, size: 18, color: colors.error.changeOpacity(0.6)),
               onPressed: onDelete,
               padding: EdgeInsets.zero,
             ),
@@ -530,8 +350,7 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.check_circle_outline_rounded,
-              size: 56, color: colors.textPrimary.changeOpacity(0.15)),
+          Icon(Icons.check_circle_outline_rounded, size: 56, color: colors.textPrimary.changeOpacity(0.15)),
           const SizedBox(height: 16),
           Text('No tasks here.', style: styles.s14w400Muted),
           const SizedBox(height: 6),

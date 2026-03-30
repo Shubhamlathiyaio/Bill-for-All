@@ -1,8 +1,11 @@
+import 'dart:developer';
 import 'package:get/get.dart';
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../data/models/module_model.dart';
+import '../data/repositories/module_migration_repository.dart';
+import '../data/repositories/module_repository.dart';
 import '../data/services/tenant_service.dart';
 import '../data/services/user_prefs_service.dart';
 import '../routes/app_routes.dart';
@@ -11,9 +14,11 @@ import 'main_shell_controller.dart';
 
 @lazySingleton
 class ModuleSelectionController extends GetxController {
-  ModuleSelectionController(this._prefs);
+  ModuleSelectionController(this._prefs, this._repo, this._migrationRepo);
 
   final UserPrefsService _prefs;
+  final ModuleRepository _repo;
+  final ModuleMigrationRepository _migrationRepo;
 
   final selected = <String>{}.obs;
   final isLoading = false.obs;
@@ -29,25 +34,15 @@ class ModuleSelectionController extends GetxController {
 
   Future<void> retryFetch() => _fetchModules();
 
-  /// Fetches available modules from the main Supabase.
-  /// The modules table already contains supabase_url + anon_key per module
-  /// — no edge function needed. We just read what's there.
   Future<void> _fetchModules() async {
     isFetchingModules.value = true;
     error.value = null;
     try {
-      final response =
-          await Supabase.instance.client.rpc('get_active_modules');
-
-      final fetched = (response as List)
-          .map((e) => ModuleModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-
+      final fetched = await _repo.getActiveModules();
       modules.assignAll(fetched);
 
       // Auto-select the todo module or the first available one.
-      final todo = modules
-          .firstWhereOrNull((m) => m.id.toLowerCase().contains('todo'));
+      final todo = modules.firstWhereOrNull((m) => m.id.toLowerCase().contains('todo'));
       if (todo != null) {
         toggleModule(todo.id);
       } else if (modules.isNotEmpty) {
@@ -82,28 +77,18 @@ class ModuleSelectionController extends GetxController {
     error.value = null;
 
     try {
-      final supabase = Supabase.instance.client;
-      final userId = supabase.auth.currentUser?.id;
+      final userId = Supabase.instance.client.auth.currentUser?.id;
       if (userId == null) throw Exception('Not authenticated');
 
       final ids = selected.toList();
 
-      // ── 1. Save module selection to main Supabase (single upsert with array) ──
-      // This records the user's chosen modules in a single array column.
+      // ── 1. Save module selection ──────────────────────────────────────────
       error.value = 'Saving your module selection...';
-      await supabase.from('user_module_selections').upsert({
-        'user_id': userId,
-        'modules': ids,
-      }, onConflict: 'user_id');
+      await _repo.saveUserModuleSelection(userId, ids);
 
-      // ── 2. Check for an active workspace (One-off fetch instead of infinite stream) ──
+      // ── 2. Check for an active workspace ──────────────────────────────────
       error.value = 'Checking workspace status...';
-      
-      final workspaceRes = await supabase
-          .from('user_workspaces')
-          .select()
-          .eq('user_id', userId)
-          .maybeSingle();
+      final workspaceRes = await _repo.getUserWorkspace(userId);
 
       String? globalUrl;
       String? globalAnonKey;
@@ -116,35 +101,45 @@ class ModuleSelectionController extends GetxController {
       error.value = 'Connecting to modules...';
 
       // ── 3. Wire up the tenant Supabase client for all selected modules ────
-      // If the user has a globally provisioned workspace, use its credentials.
-      // Otherwise, fallback to the placeholder credentials from the `modules` table so the app doesn't hang!
       final credentials = <String, Map<String, String>>{};
       for (final id in ids) {
         final mod = modules.firstWhereOrNull((m) => m.id == id);
         if (mod != null) {
-          final url = globalUrl ?? mod.supabaseUrl;
-          final anonKey = globalAnonKey ?? mod.anonKey;
-          
+          // Prioritize module-specific credentials (from main DB modules table)
+          final url = mod.supabaseUrl ?? globalUrl;
+          final anonKey = mod.anonKey ?? globalAnonKey;
+
           if (url != null && anonKey != null && url.isNotEmpty) {
-            credentials[id] = {
-              'url': url,
-              'anonKey': anonKey,
-            };
+            credentials[id] = {'url': url, 'anonKey': anonKey};
+            log('--- ModuleSelectionController: Mapping module [$id] to $url');
           }
         }
       }
 
       if (credentials.isNotEmpty) {
         await getIt<TenantService>().updateAll(credentials);
-        // await getIt<MainShellController>().activeModuleIds.upda
-      } else {
-        // If there are literally no credentials anywhere, log and proceed anyway so the user isn't stuck.
-        print('Warning: No tenant credentials were found for the selected modules.');
       }
 
-      // ── 4. Persist selection locally & refresh the shell ─────────────────
+      // ── 4. Run migrations for newly activated modules ───────────────────
+      final currentIds = getIt<MainShellController>().activeModuleIds;
+      for (final id in ids) {
+        if (!currentIds.contains(id)) {
+          error.value = 'Preparing module: ${id.toUpperCase()}...';
+          final client = getIt<TenantService>().getClient(id);
+          if (client != null) {
+            try {
+              await _migrationRepo.migrateModule(client, id);
+            } catch (e) {
+              // We log but don't block navigation, as the tables might already exist.
+              // We can refine this later with better "table exists" checks.
+              log('Migration failed for $id, continuing: $e');
+            }
+          }
+        }
+      }
+
+      // ── 5. Persist selection locally & refresh the shell ─────────────────
       await _prefs.saveActiveModules(ids);
-      // getIt always has the lazySingleton ready — no try/catch needed.
       await getIt<MainShellController>().onModulesChanged(ids);
 
       Get.offAllNamed(AppRoutes.home);
@@ -152,7 +147,6 @@ class ModuleSelectionController extends GetxController {
       error.value = 'Could not save your selection:\n$e';
     } finally {
       isLoading.value = false;
-      // error.value = null; // Don't clear error if it failed, so user can see it
     }
   }
 }

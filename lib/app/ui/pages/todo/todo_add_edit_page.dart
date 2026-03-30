@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../controllers/todo_controller.dart';
 import '../../../utils/helpers/extensions.dart';
-import '../../../utils/helpers/injectable/injectable.dart';
+import '../../widgets/get_it_hook.dart';
 
 /// Pure StatelessWidget — all state lives in [TodoController].
 /// Call [TodoController.resetForm()] before pushing this route.
-class TodoAddEditPage extends StatelessWidget {
+class TodoAddEditPage extends GetItHook<TodoController> {
   const TodoAddEditPage({super.key});
 
   @override
+  bool get autoDispose => false;
+
+  @override
   Widget build(BuildContext context) {
-    final ctrl = getIt<TodoController>();
     final colors = context.colors;
     final styles = context.styles;
 
@@ -32,9 +34,9 @@ class TodoAddEditPage extends StatelessWidget {
             padding: const EdgeInsets.only(right: 8),
             // Obx so the Save button reacts to formIsSaving
             child: Obx(() {
-              final saving = ctrl.formIsSaving.value;
+              final saving = controller.formIsSaving.value;
               return TextButton(
-                onPressed: saving ? null : ctrl.saveNewTodo,
+                onPressed: () => saving ? null : controller.addTodo,
                 child: saving
                     ? SizedBox(
                         width: 18,
@@ -57,7 +59,7 @@ class TodoAddEditPage extends StatelessWidget {
           children: [
             // ── Title ──────────────────────────────────────────────────────
             TextField(
-              controller: ctrl.titleCtrl,
+              controller: controller.titleCtrl,
               style: styles.s16w600White,
               autofocus: true,
               textInputAction: TextInputAction.next,
@@ -72,7 +74,7 @@ class TodoAddEditPage extends StatelessWidget {
 
             // ── Description ────────────────────────────────────────────────
             TextField(
-              controller: ctrl.descCtrl,
+              controller: controller.descCtrl,
               style: styles.s14w400White,
               maxLines: null,
               keyboardType: TextInputType.multiline,
@@ -89,9 +91,9 @@ class TodoAddEditPage extends StatelessWidget {
             // ── Due Date ───────────────────────────────────────────────────
             // Obx so the date label reacts to formDueDate
             Obx(() {
-              final due = ctrl.formDueDate.value;
+              final due = controller.formDueDate.value;
               return InkWell(
-                onTap: () => ctrl.pickDueDate(context),
+                onTap: () => controller.pickDueDate(context),
                 borderRadius: BorderRadius.circular(12),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -121,7 +123,7 @@ class TodoAddEditPage extends StatelessWidget {
                       ),
                       if (due != null)
                         GestureDetector(
-                          onTap: () => ctrl.formDueDate.value = null,
+                          onTap: () => controller.formDueDate.value = null,
                           child: Icon(Icons.close_rounded,
                               size: 20,
                               color: colors.textPrimary.changeOpacity(0.5)),
@@ -142,23 +144,23 @@ class TodoAddEditPage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Obx(() {
-              if (ctrl.isCategoriesLoading.value) {
+              if (controller.isCategoriesLoading.value) {
                 return Center(
                     child: CircularProgressIndicator(color: colors.primary));
               }
-              if (ctrl.categories.isEmpty) {
+              if (controller.categories.isEmpty) {
                 return Text('No categories yet.', style: styles.s13w400Muted);
               }
-              final selectedId = ctrl.formCategoryId.value;
+              final selectedId = controller.formCategoryId.value;
               return Wrap(
                 spacing: 10,
                 runSpacing: 10,
-                children: ctrl.categories.map((cat) {
+                children: controller.categories.map((cat) {
                   final isSelected = selectedId == cat.id;
                   final catColor =
-                      ctrl.parseHexColor(cat.color, colors.primary);
+                      controller.parseHexColor(cat.color, colors.primary);
                   return GestureDetector(
-                    onTap: () => ctrl.toggleFormCategory(cat.id),
+                    onTap: () => controller.toggleFormCategory(cat.id),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 200),
                       padding: const EdgeInsets.symmetric(

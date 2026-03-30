@@ -2,12 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:injectable/injectable.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../data/repositories/auth_repository.dart';
 import '../routes/app_routes.dart';
 
 @lazySingleton
 class AuthController extends GetxController {
+  AuthController(this._repo);
+
+  final AuthRepository _repo;
+
   final emailCtrl = TextEditingController(text: 'test@gmail.com');
-  final passCtrl = TextEditingController(text:'Test@123');
+  final passCtrl = TextEditingController(text: 'Test@123');
   final nameCtrl = TextEditingController();
 
   final loginIsLoading = false.obs;
@@ -34,14 +39,12 @@ class AuthController extends GetxController {
     loginError.value = null;
 
     try {
-      final response = await Supabase.instance.client.auth.signInWithPassword(
-        email: emailCtrl.text.trim(),
-        password: passCtrl.text,
+      final response = await _repo.signIn(
+        emailCtrl.text.trim(),
+        passCtrl.text,
       );
 
       if (response.session != null) {
-        // Always go to shell — shell decides whether to show module selection
-        // or the dashboard based on whether modules have been saved locally.
         Get.offAllNamed(AppRoutes.home);
       }
     } on AuthException catch (e) {
@@ -58,14 +61,13 @@ class AuthController extends GetxController {
     signUpError.value = null;
 
     try {
-      final response = await Supabase.instance.client.auth.signUp(
-        email: emailCtrl.text.trim(),
-        password: passCtrl.text,
-        data: {'full_name': nameCtrl.text.trim()},
+      final response = await _repo.signUp(
+        emailCtrl.text.trim(),
+        passCtrl.text,
+        nameCtrl.text.trim(),
       );
 
       if (response.user != null) {
-        // New user — go pick modules first
         Get.offAllNamed(AppRoutes.moduleSelection);
       } else {
         signUpError.value = 'Sign up failed. Please try again.';
